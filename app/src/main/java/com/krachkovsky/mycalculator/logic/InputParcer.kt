@@ -22,18 +22,25 @@ class InputParcer {
                     }
                     break
                 }
-            } else if ((component == "/" || component == "*") && stack.isNotEmpty() && stack[stack.lastIndex] != "/" && stack[stack.lastIndex] != "*") {
+            } else if ((component == "/" || component == "*" || component == "-" || component == "+") && stack.isEmpty()) {
                 stack.add(component)
-            } else if ((component == "/" || component == "*") && stack.isNotEmpty() && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")) {
-                output.add(stack[stack.lastIndex])
-                stack.removeAt(stack.lastIndex)
+            } else if ((component == "/" || component == "*") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")) {
                 stack.add(component)
-            } else if ((component == "-" || component == "+") && stack.isNotEmpty() && stack[stack.lastIndex] != "/" && stack[stack.lastIndex] != "*") {
+            } else if ((component == "/" || component == "*" || component == "-" || component == "+") && stack[stack.lastIndex] == "(") {
                 stack.add(component)
-            } else if ((component == "-" || component == "+") && stack.isNotEmpty() && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")) {
-                while (stack.isNotEmpty()) {
-                    val last1 = stack.removeAt(stack.lastIndex)
-                    output.add(last1)
+            } else if ((component == "/" || component == "*") && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")
+                || (component == "-" || component == "+") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")
+                || (component == "-" || component == "+") && (stack[stack.lastIndex] == "*" || stack[stack.lastIndex] == "/")
+            ) {
+                while ((component == "/" || component == "*") && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")
+                    || (component == "-" || component == "+") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")
+                    || (component == "-" || component == "+") && (stack[stack.lastIndex] == "*" || stack[stack.lastIndex] == "/")
+                ) {
+                    output.add(stack[stack.lastIndex])
+                    stack.removeAt(stack.lastIndex)
+                    if (stack.isEmpty()) {
+                        break
+                    }
                 }
                 stack.add(component)
             } else {
@@ -41,7 +48,6 @@ class InputParcer {
             }
         }
 
-        // While there's operators on the stack, pop them to the queue
         if (stack.isNotEmpty()) {
             while (stack.isNotEmpty()) {
                 val element = stack.removeAt(stack.lastIndex)
@@ -54,13 +60,6 @@ class InputParcer {
 
         return output.toTypedArray()
     }
-
-    /**
-     * Convert expression to array. This is needed to transform the expression to RPN
-     * @param expression The String expression
-     *
-     * @return Array of Strings, which contains the operators and the variables/numbers
-     */
 
     private fun convert2StringComponents(expression: String): Array<String> {
         val result = mutableListOf<String>()
