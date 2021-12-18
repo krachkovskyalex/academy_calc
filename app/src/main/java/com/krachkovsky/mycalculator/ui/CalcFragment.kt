@@ -8,12 +8,12 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import com.krachkovsky.mycalculator.databinding.CalcFragmentBinding
-import com.krachkovsky.mycalculator.logic.InputParcer
+import com.krachkovsky.mycalculator.logic.InputParser
 import java.lang.Exception
 
 class CalcFragment : Fragment() {
 
-    val inputParcer = InputParcer()
+    val inputParcer = InputParser()
     var list = arrayOf<String>()
 
     private var _binding: CalcFragmentBinding? = null

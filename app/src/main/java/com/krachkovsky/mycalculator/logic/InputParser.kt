@@ -1,11 +1,8 @@
 package com.krachkovsky.mycalculator.logic
 
-class InputParcer {
+class InputParser {
     private val stack = mutableListOf<String>()
     private val output = mutableListOf<String>()
-    private val allOperators = arrayOf("/", "*", "-", "+")
-    private val lowPriorityOperators = arrayOf("-", "+")
-    private val highPriorityOperators = arrayOf("/", "*")
 
     fun convert(expression: String): Array<String> {
 
