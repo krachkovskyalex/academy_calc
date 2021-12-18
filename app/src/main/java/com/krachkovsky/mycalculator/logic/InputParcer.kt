@@ -1,15 +1,16 @@
 package com.krachkovsky.mycalculator.logic
 
 class InputParcer {
+    private val stack = mutableListOf<String>()
+    private val output = mutableListOf<String>()
+    private val allOperators = arrayOf("/", "*", "-", "+")
+    private val lowPriorityOperators = arrayOf("-", "+")
+    private val highPriorityOperators = arrayOf("/", "*")
 
     fun convert(expression: String): Array<String> {
-        val stack = mutableListOf<String>()
-        val output = mutableListOf<String>()
 
         val originalStringComponents = this.convert2StringComponents(expression)
         for (component in originalStringComponents) {
-
-            var isBracketOpen = false
 
             if (component == "(") {
                 stack.add(component)
@@ -22,20 +23,13 @@ class InputParcer {
                     }
                     break
                 }
-            } else if ((component == "/" || component == "*" || component == "-" || component == "+") && stack.isEmpty()) {
-                stack.add(component)
-            } else if ((component == "/" || component == "*") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")) {
-                stack.add(component)
-            } else if ((component == "/" || component == "*" || component == "-" || component == "+") && stack[stack.lastIndex] == "(") {
-                stack.add(component)
-            } else if ((component == "/" || component == "*") && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")
-                || (component == "-" || component == "+") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")
-                || (component == "-" || component == "+") && (stack[stack.lastIndex] == "*" || stack[stack.lastIndex] == "/")
+            } else if (component.isAnyOperator() && stack.isEmpty()
+                || component.isHighLevelOperator() && stack[stack.lastIndex].isLowLevelOperator()
+                || component.isAnyOperator() && stack[stack.lastIndex] == "("
             ) {
-                while ((component == "/" || component == "*") && (stack[stack.lastIndex] == "/" || stack[stack.lastIndex] == "*")
-                    || (component == "-" || component == "+") && (stack[stack.lastIndex] == "-" || stack[stack.lastIndex] == "+")
-                    || (component == "-" || component == "+") && (stack[stack.lastIndex] == "*" || stack[stack.lastIndex] == "/")
-                ) {
+                stack.add(component)
+            } else if (stack.isNotEmpty() && pushOutOperator(component, stack[stack.lastIndex])) {
+                while (pushOutOperator(component, stack[stack.lastIndex])) {
                     output.add(stack[stack.lastIndex])
                     stack.removeAt(stack.lastIndex)
                     if (stack.isEmpty()) {
@@ -59,6 +53,33 @@ class InputParcer {
         }
 
         return output.toTypedArray()
+    }
+
+    private fun String.isAnyOperator(): Boolean {
+        return when (this) {
+            "/", "*", "-", "+" -> true
+            else -> false
+        }
+    }
+
+    private fun String.isLowLevelOperator(): Boolean {
+        return when (this) {
+            "-", "+" -> true
+            else -> false
+        }
+    }
+
+    private fun String.isHighLevelOperator(): Boolean {
+        return when (this) {
+            "/", "*" -> true
+            else -> false
+        }
+    }
+
+    private fun pushOutOperator(component: String, topInStack: String): Boolean {
+        return component.isHighLevelOperator() && topInStack.isHighLevelOperator()
+                || component.isLowLevelOperator() && topInStack.isLowLevelOperator()
+                || component.isLowLevelOperator() && topInStack.isHighLevelOperator()
     }
 
     private fun convert2StringComponents(expression: String): Array<String> {
