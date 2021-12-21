@@ -1,20 +1,27 @@
 package com.krachkovsky.mycalculator.ui
 
+import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import com.krachkovsky.mycalculator.databinding.CalcFragmentBinding
+import com.krachkovsky.mycalculator.logic.Calculator
 import com.krachkovsky.mycalculator.logic.InputParser
-import java.lang.Exception
+import com.krachkovsky.mycalculator.logic.command.AdditionCommand
+import com.krachkovsky.mycalculator.logic.command.DivideCommand
+import com.krachkovsky.mycalculator.logic.command.MultiplyCommand
+import com.krachkovsky.mycalculator.logic.command.SubtractCommand
+import kotlin.Exception
 
 class CalcFragment : Fragment() {
 
-    val inputParcer = InputParser()
-    var list = arrayOf<String>()
+    private val inputParser = InputParser()
+    private val calculator = setupBasicCalcCommands(Calculator())
 
     private var _binding: CalcFragmentBinding? = null
     private val binding
@@ -34,40 +41,75 @@ class CalcFragment : Fragment() {
             .root
     }
 
+    @SuppressLint("SetTextI18n")
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
-            b0.setOnClickListener { tvWorkings.append("0") }
-            b1.setOnClickListener { tvWorkings.append("1") }
-            b2.setOnClickListener { tvWorkings.append("2") }
-            b3.setOnClickListener { tvWorkings.append("3") }
-            b4.setOnClickListener { tvWorkings.append("4") }
-            b5.setOnClickListener { tvWorkings.append("5") }
-            b6.setOnClickListener { tvWorkings.append("6") }
-            b7.setOnClickListener { tvWorkings.append("7") }
-            b8.setOnClickListener { tvWorkings.append("8") }
-            b9.setOnClickListener { tvWorkings.append("9") }
-            bAc.setOnClickListener { tvWorkings.text = "" }
-            bAdd.setOnClickListener { tvWorkings.append("+") }
-            bOpenBracket.setOnClickListener { tvWorkings.append("(") }
-            bCloseBracket.setOnClickListener { tvWorkings.append(")") }
-            bDiv.setOnClickListener { tvWorkings.append("/") }
-            bSub.setOnClickListener { tvWorkings.append("-") }
-            bMult.setOnClickListener { tvWorkings.append("*") }
-            bDot.setOnClickListener { tvWorkings.append(".") }
-            bBack.setOnClickListener { tvWorkings.text = tvWorkings.text.dropLast(1) }
+            b0.setOnClickListener { replaceInputIfZeroOrSet("0") }
+            b1.setOnClickListener { replaceInputIfZeroOrSet("1") }
+            b2.setOnClickListener { replaceInputIfZeroOrSet("2") }
+            b3.setOnClickListener { replaceInputIfZeroOrSet("3") }
+            b4.setOnClickListener { replaceInputIfZeroOrSet("4") }
+            b5.setOnClickListener { replaceInputIfZeroOrSet("5") }
+            b6.setOnClickListener { replaceInputIfZeroOrSet("6") }
+            b7.setOnClickListener { replaceInputIfZeroOrSet("7") }
+            b8.setOnClickListener { replaceInputIfZeroOrSet("8") }
+            b9.setOnClickListener { replaceInputIfZeroOrSet("9") }
+            bSub.setOnClickListener { tvDisplay.append("-") }
+            bAc.setOnClickListener {
+                tvDisplay.text = ""
+                inputParser.clearInput()
+            }
+            bAdd.setOnClickListener { tvDisplay.append("+") }
+            bOpenBracket.setOnClickListener { replaceInputIfZeroOrSet("(") }
+            bCloseBracket.setOnClickListener { tvDisplay.append(")") }
+            bDiv.setOnClickListener { tvDisplay.append("/") }
+            bMult.setOnClickListener { tvDisplay.append("*") }
+            bDot.setOnClickListener { tvDisplay.append(".") }
+            bBack.setOnClickListener { tvDisplay.text = tvDisplay.text.dropLast(1) }
             bEquals.setOnClickListener {
-                try {
-                    list = inputParcer.convert(tvWorkings.text.toString())
-                    Log.e("Fragment input", list.joinToString())
-                } catch (e: Exception) {
-                    Snackbar.make(view, "Check your input. Something wrong", Snackbar.LENGTH_SHORT).show()
+                if (tvDisplay.text.isNotEmpty()) {
+                    try {
+                        val userInput = tvDisplay.text.toString()
+                        val parser = inputParser.convert(userInput)
+                        val result = calculator.calculate(parser).toString()
+                        inputParser.clearInput()
+                        tvDisplay.text = result
+
+                    } catch (e: Exception) {
+                        Snackbar.make(
+                            view,
+                            "Check your input. Something wrong",
+                            Snackbar.LENGTH_SHORT
+                        ).setAction("Clear") {
+                            tvDisplay.text = ""
+                        }
+                            .show()
+                    }
                 }
             }
-
         }
     }
-    
+
+    private fun setupBasicCalcCommands(calculator: Calculator): Calculator {
+        calculator.addCommand("+", AdditionCommand())
+        calculator.addCommand("/", DivideCommand())
+        calculator.addCommand("-", SubtractCommand())
+        calculator.addCommand("*", MultiplyCommand())
+        return calculator
+    }
+
+    private fun replaceInputIfZeroOrSet(value: String) {
+        with(binding) {
+            if (tvDisplay.text.equals("0")) {
+                tvDisplay.text = ""
+                tvDisplay.append(value)
+            } else {
+                tvDisplay.append(value)
+            }
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
